@@ -14,6 +14,7 @@
 #include <gmapping/sensor/sensor_range/rangereading.h>
 #include <gmapping/scanmatcher/scanmatcher.h>
 #include "gmapping/gridfastslam/motionmodel.h"
+#include <ros/console.h>
 
 
 namespace GMapping {

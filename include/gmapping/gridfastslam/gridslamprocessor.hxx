@@ -18,11 +18,10 @@ inline void GridSlamProcessor::scanMatch(const double* plainReading){
     if (score>m_minimumScore){
       it->pose=corrected;
     } else {
-	if (m_infoStream){
-	  m_infoStream << "Scan Matching Failed, using odometry. Likelihood=" << l <<std::endl;
-	  m_infoStream << "lp:" << m_lastPartPose.x << " "  << m_lastPartPose.y << " "<< m_lastPartPose.theta <<std::endl;
-	  m_infoStream << "op:" << m_odoPose.x << " " << m_odoPose.y << " "<< m_odoPose.theta <<std::endl;
-	}
+	  ROS_INFO_STREAM("Scan Matching Failed, using odometry. Likelihood=" << l);
+	  ROS_INFO_STREAM("lp:" << m_lastPartPose.x << " "  << m_lastPartPose.y << " "<< m_lastPartPose.theta);
+	  ROS_INFO_STREAM("op:" << m_odoPose.x << " " << m_odoPose.y << " "<< m_odoPose.theta);
+
     }
 
     m_matcher.likelihoodAndScore(s, l, it->map, it->pose, plainReading);
@@ -35,8 +34,7 @@ inline void GridSlamProcessor::scanMatch(const double* plainReading){
     m_matcher.invalidateActiveArea();
     m_matcher.computeActiveArea(it->map, it->pose, plainReading);
   }
-  if (m_infoStream)
-    m_infoStream << "Average Scan Matching Score=" << sumScore/m_particles.size() << std::endl;	
+  ROS_INFO_STREAM("Average Scan Matching Score=" << sumScore/m_particles.size());
 }
 
 inline void GridSlamProcessor::normalize(){
@@ -46,15 +44,13 @@ inline void GridSlamProcessor::normalize(){
   for (ParticleVector::iterator it=m_particles.begin(); it!=m_particles.end(); it++){
     lmax=it->weight>lmax?it->weight:lmax;
   }
-  //cout << "!!!!!!!!!!! maxwaight= "<< lmax << endl;
-  
+
   m_weights.clear();
   double wcum=0;
   m_neff=0;
   for (std::vector<Particle>::iterator it=m_particles.begin(); it!=m_particles.end(); it++){
     m_weights.push_back(exp(gain*(it->weight-lmax)));
     wcum+=m_weights.back();
-    //cout << "l=" << it->weight<< endl;
   }
   
   m_neff=0;
@@ -76,10 +72,9 @@ inline bool GridSlamProcessor::resample(const double* plainReading, int adaptSiz
     oldGeneration.push_back(m_particles[i].node);
   }
   
-  if (m_neff<m_resampleThreshold*m_particles.size()){		
-    
-    if (m_infoStream)
-      m_infoStream  << "*************RESAMPLE***************" << std::endl;
+  if (m_neff<m_resampleThreshold*m_particles.size()){
+
+    ROS_INFO_STREAM("*************RESAMPLE***************");
     
     uniform_resampler<double, double> resampler;
     m_indexes=resampler.resampleIndexes(m_weights, adaptSize);
@@ -98,9 +93,7 @@ inline bool GridSlamProcessor::resample(const double* plainReading, int adaptSiz
     unsigned int j=0;
     std::vector<unsigned int> deletedParticles;  		//this is for deleteing the particles which have been resampled away.
     
-    //		cerr << "Existing Nodes:" ;
     for (unsigned int i=0; i<m_indexes.size(); i++){
-      //			cerr << " " << m_indexes[i];
       while(j<m_indexes[i]){
 	deletedParticles.push_back(j);
 	j++;
@@ -110,12 +103,10 @@ inline bool GridSlamProcessor::resample(const double* plainReading, int adaptSiz
       Particle & p=m_particles[m_indexes[i]];
       TNode* node=0;
       TNode* oldNode=oldGeneration[m_indexes[i]];
-      //			cerr << i << "->" << m_indexes[i] << "B("<<oldNode->childs <<") ";
       node=new	TNode(p.pose, 0, oldNode, 0);
       //node->reading=0;
       node->reading=reading;
-      //			cerr << "A("<<node->parent->childs <<") " <<endl;
-      
+
       temp.push_back(p);
       temp.back().node=node;
       temp.back().previousIndex=m_indexes[i];
@@ -124,31 +115,30 @@ inline bool GridSlamProcessor::resample(const double* plainReading, int adaptSiz
       deletedParticles.push_back(j);
       j++;
     }
-    //		cerr << endl;
-    std::cerr <<  "Deleting Nodes:";
+    ROS_DEBUG_STREAM("Deleting Nodes:");
     for (unsigned int i=0; i<deletedParticles.size(); i++){
-      std::cerr <<" " << deletedParticles[i];
+      ROS_DEBUG_STREAM(" " << deletedParticles[i]);
       delete m_particles[deletedParticles[i]].node;
       m_particles[deletedParticles[i]].node=0;
     }
-    std::cerr  << " Done" <<std::endl;
+    ROS_DEBUG_STREAM(" Done");
     
     //END: BUILDING TREE
-    std::cerr << "Deleting old particles..." ;
+    ROS_DEBUG_STREAM("Deleting old particles...");
     m_particles.clear();
-    std::cerr << "Done" << std::endl;
-    std::cerr << "Copying Particles and  Registering  scans...";
+    ROS_DEBUG_STREAM("Done");
+    ROS_DEBUG_STREAM("Copying Particles and  Registering  scans...");
     for (ParticleVector::iterator it=temp.begin(); it!=temp.end(); it++){
       it->setWeight(0);
       m_matcher.invalidateActiveArea();
       m_matcher.registerScan(it->map, it->pose, plainReading);
       m_particles.push_back(*it);
     }
-    std::cerr  << " Done" <<std::endl;
+    ROS_DEBUG_STREAM(" Done");
     hasResampled = true;
   } else {
     int index=0;
-    std::cerr << "Registering Scans:";
+    ROS_DEBUG_STREAM("Registering Scans:");
     TNodeVector::iterator node_it=oldGeneration.begin();
     for (ParticleVector::iterator it=m_particles.begin(); it!=m_particles.end(); it++){
       //create a new node in the particle tree and add it to the old tree
@@ -168,7 +158,7 @@ inline bool GridSlamProcessor::resample(const double* plainReading, int adaptSiz
       node_it++;
       
     }
-    std::cerr  << "Done" <<std::endl;
+    ROS_DEBUG_STREAM("Done");
     
   }
   //END: BUILDING TREE

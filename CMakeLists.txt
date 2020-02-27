@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(openslam_gmapping)
 
 ## Find catkin macros and libraries
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS roscpp)
 
 ###################################
 ## catkin specific configuration ##
@@ -20,7 +20,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include)
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 #SUBDIRS=utils sensor log configfile scanmatcher gridfastslam gui
 
@@ -135,7 +135,7 @@ target_link_libraries(gfs2log gridfastslam)
 target_link_libraries(gfs2rec gridfastslam)
 target_link_libraries(gfs2neff gridfastslam)
 target_link_libraries(gridfastslam
-  scanmatcher log sensor_range sensor_odometry sensor_base utils)
+  scanmatcher log sensor_range sensor_odometry sensor_base utils ${catkin_LIBRARIES})
 
 #############
 ## Install ##
