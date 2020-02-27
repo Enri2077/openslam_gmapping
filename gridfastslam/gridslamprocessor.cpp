@@ -49,11 +49,11 @@ using namespace std;
     m_angularDistance=gsp.m_angularDistance;
     m_neff=gsp.m_neff;
 	
-    cerr << "FILTER COPY CONSTRUCTOR" << endl;
-    cerr << "m_odoPose=" << m_odoPose.x << " " <<m_odoPose.y << " " << m_odoPose.theta << endl;
-    cerr << "m_lastPartPose=" << m_lastPartPose.x << " " <<m_lastPartPose.y << " " << m_lastPartPose.theta << endl;
-    cerr << "m_linearDistance=" << m_linearDistance << endl;
-    cerr << "m_angularDistance=" << m_linearDistance << endl;
+    m_infoStream << "FILTER COPY CONSTRUCTOR" << endl;
+    m_infoStream << "m_odoPose=" << m_odoPose.x << " " <<m_odoPose.y << " " << m_odoPose.theta << endl;
+    m_infoStream << "m_lastPartPose=" << m_lastPartPose.x << " " <<m_lastPartPose.y << " " << m_lastPartPose.theta << endl;
+    m_infoStream << "m_linearDistance=" << m_linearDistance << endl;
+    m_infoStream << "m_angularDistance=" << m_linearDistance << endl;
     
 		
     m_xmin=gsp.m_xmin;
@@ -71,20 +71,20 @@ using namespace std;
     m_obsSigmaGain=gsp.m_obsSigmaGain;
     
 #ifdef MAP_CONSISTENCY_CHECK
-    cerr << __PRETTY_FUNCTION__ <<  ": trajectories copy.... ";
+    m_infoStream << __PRETTY_FUNCTION__ <<  ": trajectories copy.... ";
 #endif
     TNodeVector v=gsp.getTrajectories();
     for (unsigned int i=0; i<v.size(); i++){
 		m_particles[i].node=v[i];
     }
 #ifdef MAP_CONSISTENCY_CHECK
-    cerr <<  "end" << endl;
+    m_infoStream <<  "end" << endl;
 #endif
 
 
-    cerr  << "Tree: normalizing, resetting and propagating weights within copy construction/cloneing ..." ;
+    m_infoStream  << "Tree: normalizing, resetting and propagating weights within copy construction/cloneing ..." ;
     updateTreeWeights(false);
-    cerr  << ".done!" <<endl;
+    m_infoStream  << ".done!" <<endl;
   }
   
   GridSlamProcessor::GridSlamProcessor(std::ostream& infoS): m_infoStream(infoS){
@@ -97,7 +97,7 @@ using namespace std;
 
   GridSlamProcessor* GridSlamProcessor::clone() const {
 # ifdef MAP_CONSISTENCY_CHECK
-    cerr << __PRETTY_FUNCTION__ << ": performing preclone_fit_test" << endl;
+    m_infoStream << __PRETTY_FUNCTION__ << ": performing preclone_fit_test" << endl;
     typedef std::map<autoptr< Array2D<PointAccumulator> >::reference* const, int> PointerMap;
     PointerMap pmap;
 	for (ParticleVector::const_iterator it=m_particles.begin(); it!=m_particles.end(); it++){
@@ -116,17 +116,17 @@ using namespace std;
 	    }
 	  }
 	}
-	cerr << __PRETTY_FUNCTION__ <<  ": Number of allocated chunks" << pmap.size() << endl;
+	m_infoStream << __PRETTY_FUNCTION__ <<  ": Number of allocated chunks" << pmap.size() << endl;
 	for(PointerMap::const_iterator it=pmap.begin(); it!=pmap.end(); it++)
 	  assert(it->first->shares==(unsigned int)it->second);
 
-	cerr << __PRETTY_FUNCTION__ <<  ": SUCCESS, the error is somewhere else" << endl;
+	m_infoStream << __PRETTY_FUNCTION__ <<  ": SUCCESS, the error is somewhere else" << endl;
 # endif
 	GridSlamProcessor* cloned=new GridSlamProcessor(*this);
 	
 # ifdef MAP_CONSISTENCY_CHECK
-	cerr << __PRETTY_FUNCTION__ <<  ": trajectories end" << endl;
-	cerr << __PRETTY_FUNCTION__ << ": performing afterclone_fit_test" << endl;
+	m_infoStream << __PRETTY_FUNCTION__ <<  ": trajectories end" << endl;
+	m_infoStream << __PRETTY_FUNCTION__ << ": performing afterclone_fit_test" << endl;
 	ParticleVector::const_iterator jt=cloned->m_particles.begin();
 	for (ParticleVector::const_iterator it=m_particles.begin(); it!=m_particles.end(); it++){
 	  const ScanMatcherMap& m1(it->map);
@@ -143,20 +143,20 @@ using namespace std;
 	    }
 	  }
 	}
-	cerr << __PRETTY_FUNCTION__ <<  ": SUCCESS, the error is somewhere else" << endl;
+	m_infoStream << __PRETTY_FUNCTION__ <<  ": SUCCESS, the error is somewhere else" << endl;
 # endif
 	return cloned;
 }
   
   GridSlamProcessor::~GridSlamProcessor(){
-    cerr << __PRETTY_FUNCTION__ << ": Start" << endl;
-    cerr << __PRETTY_FUNCTION__ << ": Deleting tree" << endl;
+    m_infoStream << __PRETTY_FUNCTION__ << ": Start" << endl;
+    m_infoStream << __PRETTY_FUNCTION__ << ": Deleting tree" << endl;
     for (std::vector<Particle>::iterator it=m_particles.begin(); it!=m_particles.end(); it++){
 #ifdef TREE_CONSISTENCY_CHECK		
       TNode* node=it->node;
       while(node)
-	node=node->parent;
-      cerr << "@" << endl;
+	    node=node->parent;
+      m_infoStream << "@" << endl;
 #endif
       if (it->node)
 	delete it->node;
@@ -164,7 +164,7 @@ using namespace std;
     }
     
 # ifdef MAP_CONSISTENCY_CHECK
-    cerr << __PRETTY_FUNCTION__ << ": performing predestruction_fit_test" << endl;
+    m_infoStream << __PRETTY_FUNCTION__ << ": performing predestruction_fit_test" << endl;
     typedef std::map<autoptr< Array2D<PointAccumulator> >::reference* const, int> PointerMap;
     PointerMap pmap;
     for (ParticleVector::const_iterator it=m_particles.begin(); it!=m_particles.end(); it++){
@@ -183,10 +183,10 @@ using namespace std;
 	}
       }
     }
-    cerr << __PRETTY_FUNCTION__ << ": Number of allocated chunks" << pmap.size() << endl;
+    m_infoStream << __PRETTY_FUNCTION__ << ": Number of allocated chunks" << pmap.size() << endl;
     for(PointerMap::const_iterator it=pmap.begin(); it!=pmap.end(); it++)
       assert(it->first->shares>=(unsigned int)it->second);
-    cerr << __PRETTY_FUNCTION__ << ": SUCCESS, the error is somewhere else" << endl;
+    m_infoStream << __PRETTY_FUNCTION__ << ": SUCCESS, the error is somewhere else" << endl;
 # endif
   }
 
@@ -249,7 +249,7 @@ void GridSlamProcessor::setMotionModelParameters
     
     SensorMap::const_iterator laser_it=smap.find(std::string("FLASER"));
     if (laser_it==smap.end()){
-      cerr << "Attempting to load the new carmen log format" << endl;
+      m_infoStream << "Attempting to load the new carmen log format" << endl;
       laser_it=smap.find(std::string("ROBOTLASER1"));
       assert(laser_it!=smap.end());
     }
@@ -391,16 +391,16 @@ void GridSlamProcessor::setMotionModelParameters
 	m_outputStream << " " << m_linearDistance;
 	m_outputStream << " " << m_angularDistance << endl;
       }
-      
+
       if (m_infoStream)
-	m_infoStream << "update frame " <<  m_readingCount << endl
+	    m_infoStream << "update frame " <<  m_readingCount << endl
 		     << "update ld=" << m_linearDistance << " ad=" << m_angularDistance << endl;
-      
-      
-      cerr << "Laser Pose= " << reading.getPose().x << " " << reading.getPose().y 
+
+
+      m_infoStream << "Laser Pose= " << reading.getPose().x << " " << reading.getPose().y
 	   << " " << reading.getPose().theta << endl;
-      
-      
+
+
       //this is for converting the reading in a scan-matcher feedable form
       assert(reading.size()==m_beams);
       double * plainReading = new double[m_beams];
